@@ -19,7 +19,7 @@ jobs:
           git_commit_gpgsign: true
           git_push_gpgsign: false
       - uses: Swatinem/rust-cache@v2
-      - uses: knope-dev/action
+      - uses: knope-dev/action@v1
         with:
           version: 0.7.4
       - run: knope release
