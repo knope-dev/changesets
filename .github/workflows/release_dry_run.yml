@@ -16,5 +16,5 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - uses: knope-dev/action
         with:
-          version: 0.7.3
+          version: 0.7.4
       - run: knope release --dry-run
