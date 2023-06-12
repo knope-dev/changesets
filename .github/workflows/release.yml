@@ -1,0 +1,27 @@
+name: Final Release
+
+on:
+  workflow_dispatch
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.PAT }}
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v5
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+          git_push_gpgsign: false
+      - uses: Swatinem/rust-cache@v2
+      - uses: knope-dev/action
+        with:
+          version: 0.7.3
+      - run: knope release
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT }}

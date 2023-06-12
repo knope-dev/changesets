@@ -1,0 +1,87 @@
+use std::{collections::HashMap, path::Path};
+
+use crate::{change::LoadingError, BumpType, Change, PackageName};
+
+/// A set of [`Change`]s that combine to form [`Release`]s of one or more packages.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ChangeSet {
+    pub releases: HashMap<PackageName, Release>,
+}
+
+impl ChangeSet {
+    /// Load from a directory (usually called `.changeset`) containing markdown files.
+    ///
+    /// Any files that do not end with `.md` will be ignored.
+    ///
+    /// # Errors
+    ///
+    /// 1. Directory does not exist
+    /// 2. There is a problem loading a file (see [`Change`] for details)
+    pub fn from_directory<P: AsRef<Path>>(path: P) -> Result<Self, LoadingError> {
+        path.as_ref()
+            .read_dir()?
+            .filter_map(|entry| {
+                entry
+                    .map_err(LoadingError::from)
+                    .and_then(|entry| {
+                        let path = entry.path();
+                        if path.extension().is_some_and(|ext| ext == "md") && path.is_file() {
+                            Change::from_file(path).map(Some)
+                        } else {
+                            Ok(None)
+                        }
+                    })
+                    .transpose()
+            })
+            .collect()
+    }
+}
+
+impl FromIterator<Change> for ChangeSet {
+    fn from_iter<T: IntoIterator<Item = Change>>(iter: T) -> Self {
+        let mut releases = HashMap::new();
+        for change in iter {
+            for (package_name, bump_type) in change.versioning {
+                let release = releases
+                    .entry(package_name.clone())
+                    .or_insert_with(|| Release {
+                        package_name,
+                        changes: Vec::new(),
+                    });
+                release.changes.push(PackageChange {
+                    bump_type,
+                    summary: change.summary.clone(),
+                });
+            }
+        }
+        Self { releases }
+    }
+}
+
+/// The combination of applicable [`Change`]s in a [`ChangeSet`] for a single package.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct Release {
+    pub package_name: PackageName,
+    pub changes: Vec<PackageChange>,
+}
+
+impl Release {
+    /// The overall bump type for the package's version based on all the [`Release::changes`].
+    #[must_use]
+    pub fn bump_type(&self) -> BumpType {
+        self.changes
+            .iter()
+            .map(|change| change.bump_type)
+            .max()
+            .unwrap_or_default()
+    }
+}
+
+/// A [`Change`] as it applies to a single package for a [`Release`],
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct PackageChange {
+    /// The type of bump to apply to the package's version.
+    pub bump_type: BumpType,
+    /// The details of the change, as a markdown-formatted string.
+    pub summary: String,
+}
