@@ -44,17 +44,23 @@ fn load_changeset() {
     let second_release = changeset.releases.get(second_package).unwrap();
     assert_eq!(second_release.package_name, second_package);
     assert_eq!(second_release.bump_type(), second_change_bump);
-    assert_eq!(
-        second_release.changes,
-        vec![
-            PackageChange {
-                bump_type: second_package_bump,
-                summary: first_change_summary.to_string(),
-            },
-            PackageChange {
-                bump_type: second_change_bump,
-                summary: second_change_summary.to_string()
-            }
-        ]
+    // Order of reading files is probably not guaranteed
+    let first_variant = vec![
+        PackageChange {
+            bump_type: second_package_bump,
+            summary: first_change_summary.to_string(),
+        },
+        PackageChange {
+            bump_type: second_change_bump,
+            summary: second_change_summary.to_string(),
+        },
+    ];
+    let second_variant = first_variant.iter().cloned().rev().collect::<Vec<_>>();
+    assert!(
+        second_release.changes == first_variant || second_release.changes == second_variant,
+        "Expected {:?} or {:?}, got {:?}",
+        first_variant,
+        second_variant,
+        second_release.changes
     );
 }
