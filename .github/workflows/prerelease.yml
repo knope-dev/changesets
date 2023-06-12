@@ -21,7 +21,7 @@ jobs:
           git_push_gpgsign: false
       - uses: knope-dev/action
         with:
-          version: 0.7.3
+          version: 0.7.4
       - run: knope release --prerelease-label=rc
         env:
           GITHUB_TOKEN: ${{ secrets.PAT }}
