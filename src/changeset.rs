@@ -1,6 +1,6 @@
 use std::{collections::HashMap, path::Path};
 
-use crate::{change::LoadingError, BumpType, Change, PackageName};
+use crate::{change::LoadingError, Change, ChangeType, PackageName};
 
 /// A set of [`Change`]s that combine to form [`Release`]s of one or more packages.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -41,7 +41,7 @@ impl FromIterator<Change> for ChangeSet {
     fn from_iter<T: IntoIterator<Item = Change>>(iter: T) -> Self {
         let mut releases = HashMap::new();
         for change in iter {
-            for (package_name, bump_type) in change.versioning {
+            for (package_name, change_type) in change.versioning {
                 let release = releases
                     .entry(package_name.clone())
                     .or_insert_with(|| Release {
@@ -49,7 +49,7 @@ impl FromIterator<Change> for ChangeSet {
                         changes: Vec::new(),
                     });
                 release.changes.push(PackageChange {
-                    bump_type,
+                    change_type,
                     summary: change.summary.clone(),
                 });
             }
@@ -66,22 +66,18 @@ pub struct Release {
 }
 
 impl Release {
-    /// The overall bump type for the package's version based on all the [`Release::changes`].
+    /// The overall [`ChangeType`] for the package's version based on all the [`Release::changes`].
     #[must_use]
-    pub fn bump_type(&self) -> BumpType {
-        self.changes
-            .iter()
-            .map(|change| change.bump_type)
-            .max()
-            .unwrap_or_default()
+    pub fn change_type(&self) -> Option<&ChangeType> {
+        self.changes.iter().map(|change| &change.change_type).max()
     }
 }
 
 /// A [`Change`] as it applies to a single package for a [`Release`],
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PackageChange {
-    /// The type of bump to apply to the package's version.
-    pub bump_type: BumpType,
+    /// The type of change, which determines how the version will be bumped (if at all).
+    pub change_type: ChangeType,
     /// The details of the change, as a markdown-formatted string.
     pub summary: String,
 }

@@ -4,24 +4,23 @@ use std::{
     convert::Infallible,
     error::Error,
     fmt::{Display, Formatter},
-    str::FromStr,
 };
 
 /// Describes how a [`crate::Change`] affects the version of relevant packages.
 ///
 /// This is guaranteed to never be empty, as a changeset must always apply to at least one package.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Versioning(HashMap<PackageName, BumpType>);
+pub struct Versioning(HashMap<PackageName, ChangeType>);
 
-impl From<(&str, BumpType)> for Versioning {
-    fn from(value: (&str, BumpType)) -> Self {
+impl From<(&str, ChangeType)> for Versioning {
+    fn from(value: (&str, ChangeType)) -> Self {
         let value = (PackageName::from(value.0), value.1);
         Self::from(value)
     }
 }
 
-impl From<(PackageName, BumpType)> for Versioning {
-    fn from(value: (PackageName, BumpType)) -> Self {
+impl From<(PackageName, ChangeType)> for Versioning {
+    fn from(value: (PackageName, ChangeType)) -> Self {
         let mut map = HashMap::new();
         map.insert(value.0, value.1);
         Self(map)
@@ -33,14 +32,13 @@ impl Versioning {
     ///
     /// # Errors
     ///
-    /// 1. If the values type cannot be converted into a [`BumpType`], you'll get [`BuildVersioningError::BumpTypeParsingError`].
-    /// 2. If the iterator is empty, you'll get [`BuildVersioningError::EmptyVersioningError`].
+    /// 1. If the iterator is empty, you'll get [`BuildVersioningError::EmptyVersioningError`].
     pub fn try_from_iter<Key, Value, ParseError, Iter>(
         iter: Iter,
     ) -> Result<Self, BuildVersioningError>
     where
         Key: Into<PackageName>,
-        Value: TryInto<BumpType, Error = ParseError>,
+        Value: TryInto<ChangeType, Error = ParseError>,
         ParseError: Into<BuildVersioningError>,
         Iter: IntoIterator<Item = (Key, Value)>,
     {
@@ -52,7 +50,7 @@ impl Versioning {
                     .map_err(Into::into)
                     .map(|value| (key.into(), value))
             })
-            .collect::<Result<HashMap<PackageName, BumpType>, BuildVersioningError>>()?;
+            .collect::<Result<HashMap<PackageName, ChangeType>, BuildVersioningError>>()?;
         if map.is_empty() {
             Err(BuildVersioningError::EmptyVersioningError)
         } else {
@@ -60,7 +58,7 @@ impl Versioning {
         }
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = (&PackageName, &BumpType)> {
+    pub fn iter(&self) -> impl Iterator<Item = (&PackageName, &ChangeType)> {
         self.0.iter()
     }
 
@@ -76,8 +74,8 @@ impl Versioning {
 }
 
 impl IntoIterator for Versioning {
-    type Item = (PackageName, BumpType);
-    type IntoIter = std::collections::hash_map::IntoIter<PackageName, BumpType>;
+    type Item = (PackageName, ChangeType);
+    type IntoIter = std::collections::hash_map::IntoIter<PackageName, ChangeType>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
@@ -85,12 +83,10 @@ impl IntoIterator for Versioning {
 }
 
 /// The error that occurs if you try to create a [`Versioning`] out of an iterator which has no items.
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum BuildVersioningError {
     /// The iterator was empty.
     EmptyVersioningError,
-    /// The iterator contained an invalid [`BumpType`].
-    BumpTypeParsingError(BumpTypeParsingError),
 }
 
 impl Display for BuildVersioningError {
@@ -99,14 +95,7 @@ impl Display for BuildVersioningError {
             Self::EmptyVersioningError => {
                 f.write_str("Versioning needs to contain at least one item.")
             }
-            Self::BumpTypeParsingError(error) => error.fmt(f),
         }
-    }
-}
-
-impl From<BumpTypeParsingError> for BuildVersioningError {
-    fn from(value: BumpTypeParsingError) -> Self {
-        Self::BumpTypeParsingError(value)
     }
 }
 
@@ -123,71 +112,55 @@ pub type PackageName = String;
 
 /// The [Semantic Versioning](https://semver.org/) component which should be incremented when a [`Change`]
 /// is applied.
-#[derive(Copy, Clone, Debug, Default, Eq, PartialEq)]
-pub enum BumpType {
-    #[default]
-    None,
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ChangeType {
     Patch,
     Minor,
     Major,
+    Custom(String),
 }
 
-impl Display for BumpType {
+impl Display for ChangeType {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            BumpType::None => write!(f, "none"),
-            BumpType::Patch => write!(f, "patch"),
-            BumpType::Minor => write!(f, "minor"),
-            BumpType::Major => write!(f, "major"),
+            ChangeType::Custom(label) => write!(f, "{label}"),
+            ChangeType::Patch => write!(f, "patch"),
+            ChangeType::Minor => write!(f, "minor"),
+            ChangeType::Major => write!(f, "major"),
         }
     }
 }
 
-impl FromStr for BumpType {
-    type Err = BumpTypeParsingError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+impl From<&str> for ChangeType {
+    fn from(s: &str) -> Self {
         match s {
-            "none" => Ok(BumpType::None),
-            "patch" => Ok(BumpType::Patch),
-            "minor" => Ok(BumpType::Minor),
-            "major" => Ok(BumpType::Major),
-            _ => Err(BumpTypeParsingError(String::from(s))),
+            "patch" => ChangeType::Patch,
+            "minor" => ChangeType::Minor,
+            "major" => ChangeType::Major,
+            other => ChangeType::Custom(other.to_string()),
         }
     }
 }
 
-impl Ord for BumpType {
+impl Ord for ChangeType {
     fn cmp(&self, other: &Self) -> Ordering {
         match (self, other) {
-            (BumpType::None, BumpType::None)
-            | (BumpType::Major, BumpType::Major)
-            | (BumpType::Patch, BumpType::Patch)
-            | (BumpType::Minor, BumpType::Minor) => Ordering::Equal,
-            (BumpType::None, _) => Ordering::Less,
-            (_, BumpType::None) => Ordering::Greater,
-            (BumpType::Patch, _) => Ordering::Less,
-            (_, BumpType::Patch) => Ordering::Greater,
-            (BumpType::Minor, _) => Ordering::Less,
-            (_, BumpType::Minor) => Ordering::Greater,
+            (ChangeType::Custom(_), ChangeType::Custom(_))
+            | (ChangeType::Major, ChangeType::Major)
+            | (ChangeType::Patch, ChangeType::Patch)
+            | (ChangeType::Minor, ChangeType::Minor) => Ordering::Equal,
+            (ChangeType::Custom(_), _) => Ordering::Less,
+            (_, ChangeType::Custom(_)) => Ordering::Greater,
+            (ChangeType::Patch, _) => Ordering::Less,
+            (_, ChangeType::Patch) => Ordering::Greater,
+            (ChangeType::Minor, _) => Ordering::Less,
+            (_, ChangeType::Minor) => Ordering::Greater,
         }
     }
 }
 
-impl PartialOrd for BumpType {
+impl PartialOrd for ChangeType {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
-
-/// The error that occurs when [`BumpType::from_str`] fails due to an invalid input.
-#[derive(Debug)]
-pub struct BumpTypeParsingError(String);
-
-impl Display for BumpTypeParsingError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} is not a valid BumpType", self.0)
-    }
-}
-
-impl Error for BumpTypeParsingError {}

@@ -20,9 +20,7 @@
 
 pub use change::{Change, LoadingError as ChangeParsingError, ParsingError as ChangeLoadingError};
 pub use changeset::{ChangeSet, PackageChange, Release};
-pub use versioning::{
-    BuildVersioningError, BumpType, BumpTypeParsingError, PackageName, Versioning,
-};
+pub use versioning::{BuildVersioningError, ChangeType, PackageName, Versioning};
 
 mod change;
 mod changeset;

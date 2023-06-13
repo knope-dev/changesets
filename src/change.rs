@@ -2,10 +2,9 @@ use std::{
     error::Error,
     fmt::Display,
     path::{Path, PathBuf},
-    str::FromStr,
 };
 
-use crate::{BuildVersioningError, BumpType, BumpTypeParsingError, PackageName, Versioning};
+use crate::{BuildVersioningError, ChangeType, PackageName, Versioning};
 
 /// Represents a single [change](https://github.com/knope-dev/changesets#terminology) which is
 /// applicable to any number of packages.
@@ -73,10 +72,10 @@ impl Change {
                     .split_once(':')
                     .ok_or(ParsingError::InvalidFrontMatter)?;
                 let package_name = PackageName::from(parts.0.trim());
-                let bump_type = BumpType::from_str(parts.1.trim())?;
-                Ok((package_name, bump_type))
+                let change_type = ChangeType::from(parts.1.trim());
+                Ok((package_name, change_type))
             })
-            .collect::<Result<Vec<(String, BumpType)>, ParsingError>>()?;
+            .collect::<Result<Vec<(String, ChangeType)>, ParsingError>>()?;
         let versioning = Versioning::try_from_iter(versioning_iter)?;
         let mut lines = lines.skip(versioning.len());
         let end_front_matter = lines.next().ok_or(ParsingError::InvalidFrontMatter)?;
@@ -98,8 +97,8 @@ impl Change {
 impl Display for Change {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "---")?;
-        for (package_name, bump_type) in self.versioning.iter() {
-            writeln!(f, "{package_name}: {bump_type}")?;
+        for (package_name, change_type) in self.versioning.iter() {
+            writeln!(f, "{package_name}: {change_type}")?;
         }
         writeln!(f, "---")?;
         writeln!(f)?;
@@ -117,12 +116,6 @@ pub enum ParsingError {
 impl From<BuildVersioningError> for ParsingError {
     fn from(err: BuildVersioningError) -> Self {
         ParsingError::InvalidVersioning(err)
-    }
-}
-
-impl From<BumpTypeParsingError> for ParsingError {
-    fn from(err: BumpTypeParsingError) -> Self {
-        ParsingError::InvalidVersioning(err.into())
     }
 }
 

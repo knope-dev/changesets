@@ -44,15 +44,15 @@ knope: minor
 This is a feature for Knope in the same PR
 ```
 
-When you release, the `knope` package would contain both summaries in its changelog (and apply the greatest bump type), and the `changesets` package would contain only the first summary in its changelog.
+When you release, the `knope` package would contain both summaries in its changelog (and bump the version based on the highest change type), and the `changesets` package would contain only the first summary in its changelog.
 
 This works very similarly to [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/), but does not rely on Git. You can use this together _with_ conventional commits using a tool like [Knope].
 
 ## Terminology in this project
 
-- **Change**: A single Markdown file (usually in the `.changeset` directory) describing a change to one or more packages. Note that this matches the original definition of [changesets]. A change contains a summary (in Markdown), a list of packages affected, and the semver "bump type" for each package.
+- **Change**: A single Markdown file (usually in the `.changeset` directory) describing a change to one or more packages. Note that this matches the original definition of [changesets]. A change contains a summary (in Markdown), a list of packages affected, and the semver "change type" for each package.
 - **Change summary**: The Markdown description of a change. This is the body of the change file. It should be included in the generated changelog.
-- **Bump type**: One of `none`, `patch`, `minor`, or `major`, describing which components of a semantic version are affected by the change.
+- **Change type**: A string describing which type of change this is. If it is one of `patch`, `minor`, or `major`, the version will be bumped accordingly. All other types of changes will have no effect on the version, but may be used in the generation of the changelog.
 - **Package**: A releasable unit of code. Examples include a Rust crate, a JavaScript package, a Go module. A change can affect multiple packages.
 - **Changeset**: A _set_ of _changes_ which will be released together. Notably, this differs from the original definition of [changesets], which is does not have a term for the bundle of multiple changes. A changeset may affect any number of packages.
 - **Release**: The part of a changeset that applies to a single package and determines how that package is released.

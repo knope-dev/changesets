@@ -1,19 +1,19 @@
-use changesets::{BumpType, Change, Versioning};
+use changesets::{Change, ChangeType, Versioning};
 use tempfile::tempdir;
 
 #[test]
 fn create_change() {
     let basic_programmatic = Change {
         unique_id: String::from("basic_programmatic"),
-        versioning: Versioning::from(("my_package", BumpType::Minor)),
+        versioning: Versioning::from(("my_package", ChangeType::Minor)),
         summary: String::from("### This is a summary"),
     };
 
     let multiple_packages = Change {
         unique_id: String::from("multiple_packages"),
         versioning: Versioning::try_from_iter([
-            ("my_package", BumpType::Minor),
-            ("my_other_package", BumpType::Major),
+            ("my_package", ChangeType::Minor),
+            ("my_other_package", ChangeType::Major),
         ])
         .unwrap(),
         summary: String::from("### This is a summary"),
@@ -58,6 +58,6 @@ fn load_change() {
     assert_eq!(change.summary, "### This is a summary");
     assert_eq!(
         change.versioning,
-        Versioning::from(("my_package", BumpType::Minor))
+        Versioning::from(("my_package", ChangeType::Minor))
     );
 }
