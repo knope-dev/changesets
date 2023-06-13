@@ -8,7 +8,9 @@ This crate programmatically works with [changesets], and only concerns itself wi
 
 Examples are not copy/pasted here, because it's hard to test them. So instead, here are links to common tasks:
 
-- [Create a change](examples/create_change.rs)
+- [Create a change](https://github.com/knope-dev/changesets/blob/61a3f4887e23af02542da66428d4364ee6025f00/tests/change.rs#L5)
+- [Load a change](https://github.com/knope-dev/changesets/blob/61a3f4887e23af02542da66428d4364ee6025f00/tests/change.rs#LL46C6-L46C6)
+- [Load a changeset](https://github.com/knope-dev/changesets/blob/61a3f4887e23af02542da66428d4364ee6025f00/tests/change_set.rs#L5)
 
 ## What is a changeset?
 
