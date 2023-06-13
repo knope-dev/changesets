@@ -6,14 +6,13 @@ on:
       - main
 
 jobs:
-  create-release:
+  dry-run:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
           token: ${{ secrets.PAT }}
-      - uses: Swatinem/rust-cache@v2
       - uses: knope-dev/action@v1
         with:
           version: 0.7.4
