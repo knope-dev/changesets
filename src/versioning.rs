@@ -82,6 +82,12 @@ impl IntoIterator for Versioning {
     }
 }
 
+impl FromIterator<(PackageName, ChangeType)> for Versioning {
+    fn from_iter<T: IntoIterator<Item = (PackageName, ChangeType)>>(iter: T) -> Self {
+        Self(iter.into_iter().collect())
+    }
+}
+
 /// The error that occurs if you try to create a [`Versioning`] out of an iterator which has no items.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum BuildVersioningError {
