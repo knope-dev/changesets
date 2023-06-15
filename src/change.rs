@@ -13,7 +13,7 @@ pub struct Change {
     /// Something to uniquely identify a change.
     ///
     /// This is the name of the file (without the `.md` extension) which defines this changeset.
-    pub unique_id: String,
+    pub unique_id: UniqueId,
     /// Describes how a changeset affects the relevant packages.
     pub versioning: Versioning,
     /// The details of the change which will be written to a Changelog file
@@ -31,7 +31,7 @@ impl Change {
     /// If the file cannot be written, an [`std::io::Error`] is returned. This may happen if the
     /// directory does not exist.
     pub fn write_to_directory<T: AsRef<Path>>(&self, path: T) -> std::io::Result<PathBuf> {
-        let output_path = path.as_ref().join(format!("{}.md", self.unique_id));
+        let output_path = path.as_ref().join(self.unique_id.to_file_name());
         std::fs::write(&output_path, self.to_string())?;
         Ok(output_path)
     }
@@ -53,12 +53,12 @@ impl Change {
         let unique_id = file_name
             .strip_suffix(".md")
             .ok_or(LoadingError::InvalidFileName)?
-            .to_string();
+            .into();
         let contents = std::fs::read_to_string(path)?;
         Self::from_str(unique_id, &contents).map_err(LoadingError::from)
     }
 
-    fn from_str(unique_id: String, content: &str) -> Result<Self, ParsingError> {
+    fn from_str(unique_id: UniqueId, content: &str) -> Result<Self, ParsingError> {
         let mut lines = content.lines();
         let first_line = lines.next().ok_or(ParsingError::MissingFrontMatter)?;
         if first_line.trim() != "---" {
@@ -104,6 +104,50 @@ impl Display for Change {
         writeln!(f)?;
         writeln!(f, "{}", self.summary)
     }
+}
+
+/// The unique ID of a [`Change`], parsed from and used to set the file name of the Markdown file.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct UniqueId(String);
+
+impl UniqueId {
+    pub fn to_file_name(&self) -> String {
+        format!("{self}.md")
+    }
+}
+
+impl<T: AsRef<str>> From<T> for UniqueId {
+    fn from(s: T) -> Self {
+        Self(
+            s.as_ref()
+                .chars()
+                .filter_map(|c| {
+                    if c.is_ascii_alphanumeric() {
+                        Some(c.to_ascii_lowercase())
+                    } else if c == ' ' {
+                        Some('_')
+                    } else {
+                        None
+                    }
+                })
+                .collect(),
+        )
+    }
+}
+
+impl Display for UniqueId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+#[cfg(test)]
+#[test]
+fn test_create_unique_id() {
+    assert_eq!(
+        UniqueId::from("`[i carry your heart with me(i carry it in]`").to_string(),
+        "i_carry_your_heart_with_mei_carry_it_in"
+    );
 }
 
 #[derive(Debug)]

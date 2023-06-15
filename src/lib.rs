@@ -18,7 +18,7 @@
     )
 )]
 
-pub use change::{Change, LoadingError as ChangeParsingError, ParsingError as ChangeLoadingError};
+pub use change::{Change, LoadingError, ParsingError, UniqueId};
 pub use changeset::{ChangeSet, PackageChange, Release};
 pub use versioning::{BuildVersioningError, ChangeType, PackageName, Versioning};
 

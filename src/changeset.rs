@@ -1,6 +1,9 @@
 use std::{collections::HashMap, path::Path};
 
-use crate::{change::LoadingError, Change, ChangeType, PackageName};
+use crate::{
+    change::{LoadingError, UniqueId},
+    Change, ChangeType, PackageName,
+};
 
 /// A set of [`Change`]s that combine to form [`Release`]s of one or more packages.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -49,6 +52,7 @@ impl FromIterator<Change> for ChangeSet {
                         changes: Vec::new(),
                     });
                 release.changes.push(PackageChange {
+                    unique_id: change.unique_id.clone(),
                     change_type,
                     summary: change.summary.clone(),
                 });
@@ -76,6 +80,8 @@ impl Release {
 /// A [`Change`] as it applies to a single package for a [`Release`],
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PackageChange {
+    /// The ID of the originating [`Change`].
+    pub unique_id: UniqueId,
     /// The type of change, which determines how the version will be bumped (if at all).
     pub change_type: ChangeType,
     /// The details of the change, as a markdown-formatted string.
