@@ -37,6 +37,7 @@ fn load_changeset() {
     assert_eq!(
         first_release.changes,
         vec![PackageChange {
+            unique_id: first_change_name.into(),
             change_type: first_change_type,
             summary: first_change_summary.to_string()
         },]
@@ -47,10 +48,12 @@ fn load_changeset() {
     // Order of reading files is probably not guaranteed
     let first_variant = vec![
         PackageChange {
+            unique_id: first_change_name.into(),
             change_type: second_package_type,
             summary: first_change_summary.to_string(),
         },
         PackageChange {
+            unique_id: second_change_name.into(),
             change_type: second_change_type,
             summary: second_change_summary.to_string(),
         },

@@ -111,6 +111,7 @@ impl Display for Change {
 pub struct UniqueId(String);
 
 impl UniqueId {
+    #[must_use]
     pub fn to_file_name(&self) -> String {
         format!("{self}.md")
     }
@@ -124,7 +125,7 @@ impl<T: AsRef<str>> From<T> for UniqueId {
                 .filter_map(|c| {
                     if c.is_ascii_alphanumeric() {
                         Some(c.to_ascii_lowercase())
-                    } else if c == ' ' {
+                    } else if c == ' ' || c == '_' || c == '-' {
                         Some('_')
                     } else {
                         None
@@ -145,7 +146,7 @@ impl Display for UniqueId {
 #[test]
 fn test_create_unique_id() {
     assert_eq!(
-        UniqueId::from("`[i carry your heart with me(i carry it in]`").to_string(),
+        UniqueId::from("`[i carry your_heart with-me(i carry it in]`").to_string(),
         "i_carry_your_heart_with_mei_carry_it_in"
     );
 }
