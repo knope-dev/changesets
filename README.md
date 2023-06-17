@@ -50,13 +50,50 @@ This works very similarly to [conventional commits](https://www.conventionalcomm
 
 ## Terminology in this project
 
-- **Change**: A single Markdown file (usually in the `.changeset` directory) describing a change to one or more packages. Note that this matches the original definition of [changesets]. A change contains a summary (in Markdown), a list of packages affected, and the semver "change type" for each package.
-- **Change summary**: The Markdown description of a change. This is the body of the change file. It should be included in the generated changelog.
-- **Change type**: A string describing which type of change this is. If it is one of `patch`, `minor`, or `major`, the version will be bumped accordingly. All other types of changes will have no effect on the version, but may be used in the generation of the changelog.
-- **Package**: A releasable unit of code. Examples include a Rust crate, a JavaScript package, a Go module. A change can affect multiple packages.
-- **Changeset**: A _set_ of _changes_ which will be released together. Notably, this differs from the original definition of [changesets], which is does not have a term for the bundle of multiple changes. A changeset may affect any number of packages.
-- **Release**: The part of a changeset that applies to a single package and determines how that package is released.
+### Change
+
+A single Markdown file (usually in the `.changeset` directory) describing a change to one or more packages. Note that this matches the original definition of [changesets]. A change contains a summary (in Markdown), a list of packages affected, and the ["change type"](#change-type) for each package. The file must be in a [very strict format](#change-file-format).
+
+### Change summary
+
+The Markdown description of a change. This is the body of the change file. It should be included in the generated changelog.
+
+### Change type
+
+A string describing which type of change this is. If it is one of `patch`, `minor`, or `major`, the version will be bumped accordingly. All other types of changes are equivalent to `patch` for versioning, but may have a different effect in the generation of the changelog.
+
+### Package
+
+A releasable unit of code. Examples include a Rust crate, a JavaScript package, a Go module. A change can affect multiple packages.
+
+### Changeset
+
+A _set_ of _changes_ which will be released together. Notably, this differs from the original definition of [changesets], which is does not have a term for the bundle of multiple changes. A changeset may affect any number of packages.
+
+### Release
+
+The part of a changeset that applies to a single package and determines how that package is released.
+
+## Change file format
+
+Change files are Markdown files whose names _must_ end with `.md`. The content of the file must be as follows:
+
+1. A line containing `---` (three dashes) on its own line.
+2. Any number of lines containing `package: change type` pairs where `package` defines a package that this change impacts and `change type` is a [change type](#change-type). One pair per line. The first `:` is used to determine the separation between package and change type, so the package name may not contain a `:`.
+3. A line containing `---` (three dashes) on its own line.
+4. The rest of the file can contain any valid Markdown text.
+
+## Differences from the original changesets
+
+1. The original is implemented in JavaScript, intended for use with Node.js. This is implemented in Rust, intended primarily for use by [Knope].
+2. The original has four fixed changed types (`major`, `minor`, `patch`, and `none`). This has only the first three, and allows for custom change types (for more flexibility when building changelogs). There is no way to specify that a change does not impact the version, since releasing a package without increasing the version is typically not supported.
+3. The original defines a single Markdown file as a "changeset" without any term to define the collection of change files (e.g., in the `.changeset` folder). This crate defines a "changeset" as the collection of change files in a directory (e.g., `.changeset` is a changeset). A single change file is called a "change".
+
+## Questions?
+
+If you have any questions, comments, or suggestions, please create a [discussion] (after checking for an existing one).
 
 [semver]: https://semver.org/
 [changesets]: https://github.com/changesets/changesets
 [Knope]: https://github.com/knope-dev/knope
+[discussion]: https://github.com/knope-dev/changesets/discussions
