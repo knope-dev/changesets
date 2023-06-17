@@ -119,17 +119,20 @@ impl UniqueId {
 
 impl<T: AsRef<str>> From<T> for UniqueId {
     fn from(s: T) -> Self {
+        let mut previous_was_underscore = false;
         Self(
             s.as_ref()
                 .chars()
-                .filter_map(|c| {
-                    if c.is_ascii_alphanumeric() {
+                .filter_map(|c| match (c, previous_was_underscore) {
+                    (c, _) if c.is_ascii_alphanumeric() => {
+                        previous_was_underscore = false;
                         Some(c.to_ascii_lowercase())
-                    } else if c == ' ' || c == '_' || c == '-' {
-                        Some('_')
-                    } else {
-                        None
                     }
+                    (' ' | '_' | '-', false) => {
+                        previous_was_underscore = true;
+                        Some('_')
+                    }
+                    _ => None,
                 })
                 .collect(),
         )
@@ -143,12 +146,32 @@ impl Display for UniqueId {
 }
 
 #[cfg(test)]
-#[test]
-fn test_create_unique_id() {
-    assert_eq!(
-        UniqueId::from("`[i carry your_heart with-me(i carry it in]`").to_string(),
-        "i_carry_your_heart_with_mei_carry_it_in"
-    );
+mod test_unique_id {
+    use super::UniqueId;
+
+    #[test]
+    fn it_handles_special_characters() {
+        assert_eq!(
+            UniqueId::from("`[i carry your_heart with-me(i carry it in]`").to_string(),
+            "i_carry_your_heart_with_mei_carry_it_in"
+        );
+    }
+
+    #[test]
+    fn it_handles_capitalization() {
+        assert_eq!(
+            UniqueId::from("This is a Title").to_string(),
+            "this_is_a_title"
+        );
+    }
+
+    #[test]
+    fn it_doesnt_duplicate_underscores() {
+        assert_eq!(
+            UniqueId::from("Something ______ else").to_string(),
+            "something_else"
+        );
+    }
 }
 
 #[derive(Debug)]
