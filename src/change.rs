@@ -94,6 +94,71 @@ impl Change {
     }
 }
 
+#[cfg(test)]
+mod test_change {
+    use super::*;
+
+    #[test]
+    fn it_can_contain_spaces_in_package_names() {
+        let change = Change::from_str(
+            UniqueId::from("a change"),
+            r#"---
+package name: patch
+package name 2: minor
+---
+This is a summary
+"#,
+        )
+        .unwrap();
+        assert_eq!(
+            change.versioning,
+            Versioning::from_iter(vec![
+                (PackageName::from("package name"), ChangeType::Patch),
+                (PackageName::from("package name 2"), ChangeType::Minor),
+            ])
+        );
+    }
+
+    #[test]
+    fn it_can_contain_spaces_in_change_types() {
+        let change = Change::from_str(
+            UniqueId::from("a change"),
+            r#"---
+package: custom change type
+package name 2: something custom
+---
+This is a summary
+"#,
+        )
+        .unwrap();
+        assert_eq!(
+            change.versioning,
+            Versioning::from_iter(vec![
+                (
+                    PackageName::from("package"),
+                    ChangeType::Custom("custom change type".into())
+                ),
+                (
+                    PackageName::from("package name 2"),
+                    ChangeType::Custom("something custom".into())
+                ),
+            ])
+        );
+    }
+
+    #[test]
+    fn it_can_have_an_empty_summary() {
+        let change = Change::from_str(
+            UniqueId::from("a change"),
+            r#"---
+package: patch
+---"#,
+        )
+        .unwrap();
+        assert_eq!(change.summary, "");
+    }
+}
+
 impl Display for Change {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "---")?;
