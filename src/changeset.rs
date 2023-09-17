@@ -59,7 +59,9 @@ impl FromIterator<Change> for ChangeSet {
             }
         }
         for release in releases.values_mut() {
-            release.changes.sort_by_key(|change| change.unique_id)
+            release
+                .changes
+                .sort_by(|first, second| first.unique_id.cmp(&second.unique_id));
         }
         Self { releases }
     }
