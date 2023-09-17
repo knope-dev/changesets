@@ -172,7 +172,7 @@ impl Display for Change {
 }
 
 /// The unique ID of a [`Change`], parsed from and used to set the file name of the Markdown file.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct UniqueId(String);
 
 impl UniqueId {
