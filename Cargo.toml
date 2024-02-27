@@ -14,4 +14,4 @@ version = "0.2.2"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dev-dependencies]
-tempfile = "3.10.0"
+tempfile = "3.10.1"
