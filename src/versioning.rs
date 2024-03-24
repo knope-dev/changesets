@@ -148,6 +148,17 @@ impl From<&str> for ChangeType {
     }
 }
 
+impl From<String> for ChangeType {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "patch" => ChangeType::Patch,
+            "minor" => ChangeType::Minor,
+            "major" => ChangeType::Major,
+            _ => ChangeType::Custom(s),
+        }
+    }
+}
+
 impl Ord for ChangeType {
     fn cmp(&self, other: &Self) -> Ordering {
         match (self, other) {
