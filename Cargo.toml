@@ -9,7 +9,7 @@ repository = "https://github.com/knope-dev/changesets"
 license = "MIT OR Apache-2.0"
 keywords = ["changeset", "changelog", "semantic", "versioning", "release"]
 categories = ["development-tools"]
-version = "0.2.3"
+version = "0.2.4"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
