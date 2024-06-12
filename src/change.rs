@@ -40,22 +40,36 @@ impl Change {
     ///
     /// # Errors
     ///
-    /// - If the file cannot be read
-    /// - If the file does not have a valid name (i.e. it does not end in `.md`)
-    /// - If the file does not have a valid front matter
-    /// - If the file does not have a valid versioning info in the front matter
+    /// - If the file can't be read
+    /// - If the file doesn't have a valid name (it doesn't end in `.md`)
+    /// - If the file doesn't have a valid front matter
+    /// - If the file doesn't have valid versioning info in the front matter
     pub fn from_file<T: AsRef<Path>>(path: T) -> Result<Self, LoadingError> {
         let path = path.as_ref();
         let file_name = path
             .file_name()
             .ok_or(LoadingError::InvalidFileName)?
             .to_string_lossy();
+        let contents = std::fs::read_to_string(path)?;
+        Self::from_file_name_and_content(file_name.as_ref(), &contents).map_err(LoadingError::from)
+    }
+
+    /// Given the name of a file and its content, create a [`Change`].
+    ///
+    /// # Errors
+    ///
+    /// - If the file doesn't have a valid name (it doesn't end in `.md`)
+    /// - If the file doesn't have a valid front matter
+    /// - If the file doesn't have valid versioning info in the front matter
+    pub fn from_file_name_and_content(
+        file_name: &str,
+        content: &str,
+    ) -> Result<Self, LoadingError> {
         let unique_id = file_name
             .strip_suffix(".md")
             .ok_or(LoadingError::InvalidFileName)?
             .into();
-        let contents = std::fs::read_to_string(path)?;
-        Self::from_str(unique_id, &contents).map_err(LoadingError::from)
+        Self::from_str(unique_id, content).map_err(LoadingError::from)
     }
 
     fn from_str(unique_id: UniqueId, content: &str) -> Result<Self, ParsingError> {
