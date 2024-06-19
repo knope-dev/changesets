@@ -1,4 +1,4 @@
-use std::{collections::HashMap, path::Path};
+use std::{path::Path, sync::Arc};
 
 use crate::{
     change::{LoadingError, UniqueId},
@@ -8,18 +8,18 @@ use crate::{
 /// A set of [`Change`]s that combine to form [`Release`]s of one or more packages.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ChangeSet {
-    pub releases: HashMap<PackageName, Release>,
+    releases: Vec<Release>,
 }
 
 impl ChangeSet {
     /// Load from a directory (usually called `.changeset`) containing markdown files.
     ///
-    /// Any files that do not end with `.md` will be ignored.
+    /// Any files that don't end with `.md` will be ignored.
     ///
     /// # Errors
     ///
-    /// 1. Directory does not exist
-    /// 2. There is a problem loading a file (see [`Change`] for details)
+    /// 1. Directory doesn't exist
+    /// 2. There's a problem loading a file (see [`Change`] for details)
     pub fn from_directory<P: AsRef<Path>>(path: P) -> Result<Self, LoadingError> {
         path.as_ref()
             .read_dir()?
@@ -42,28 +42,63 @@ impl ChangeSet {
 
 impl FromIterator<Change> for ChangeSet {
     fn from_iter<T: IntoIterator<Item = Change>>(iter: T) -> Self {
-        let mut releases = HashMap::new();
-        for change in iter {
-            for (package_name, change_type) in change.versioning {
-                let release = releases
-                    .entry(package_name.clone())
-                    .or_insert_with(|| Release {
-                        package_name,
-                        changes: Vec::new(),
-                    });
-                release.changes.push(PackageChange {
-                    unique_id: change.unique_id.clone(),
-                    change_type,
-                    summary: change.summary.clone(),
-                });
-            }
-        }
-        for release in releases.values_mut() {
+        let mut releases = iter
+            .into_iter()
+            .flat_map(|change| {
+                let unique_id = Arc::new(change.unique_id);
+                let summary: Arc<str> = change.summary.into();
+                change
+                    .versioning
+                    .into_iter()
+                    .map(move |(package_name, change_type)| {
+                        (
+                            package_name,
+                            PackageChange {
+                                change_type,
+                                unique_id: unique_id.clone(),
+                                summary: summary.clone(),
+                            },
+                        )
+                    })
+            })
+            .fold(
+                Vec::<Release>::new(),
+                |mut releases, (package_name, change)| {
+                    if let Some(release) = releases
+                        .iter_mut()
+                        .find(|release| release.package_name == package_name)
+                    {
+                        release.changes.push(change);
+                    } else {
+                        releases.push(Release {
+                            package_name,
+                            changes: vec![change],
+                        });
+                    }
+                    releases
+                },
+            );
+        for release in &mut releases {
             release
                 .changes
                 .sort_by(|first, second| first.unique_id.cmp(&second.unique_id));
         }
         Self { releases }
+    }
+}
+
+impl IntoIterator for ChangeSet {
+    type Item = Release;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.releases.into_iter()
+    }
+}
+
+impl From<ChangeSet> for Vec<Release> {
+    fn from(value: ChangeSet) -> Vec<Release> {
+        value.releases
     }
 }
 
@@ -86,9 +121,9 @@ impl Release {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PackageChange {
     /// The ID of the originating [`Change`].
-    pub unique_id: UniqueId,
+    pub unique_id: Arc<UniqueId>,
     /// The type of change, which determines how the version will be bumped (if at all).
     pub change_type: ChangeType,
     /// The details of the change, as a markdown-formatted string.
-    pub summary: String,
+    pub summary: Arc<str>,
 }

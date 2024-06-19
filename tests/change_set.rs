@@ -1,4 +1,4 @@
-use changesets::{ChangeSet, ChangeType, PackageChange};
+use changesets::{ChangeSet, ChangeType, PackageChange, Release, UniqueId};
 use tempfile::tempdir;
 
 #[test]
@@ -13,7 +13,7 @@ fn load_changeset() {
     let second_package_type = ChangeType::Patch;
     let first_change_summary = "### This is a summary";
     std::fs::write(
-        &first_change_path,
+        first_change_path,
         format!(
             "---\n{first_package}: {first_change_type}\n{second_package}: {second_package_type}\n---\n\n{first_change_summary}\n",
         ),
@@ -25,37 +25,38 @@ fn load_changeset() {
     let second_change_type = ChangeType::Major;
     let second_change_summary = "### Another summary";
     std::fs::write(
-        &second_change_path,
+        second_change_path,
         format!("---\n{second_package}: {second_change_type}\n---\n\n{second_change_summary}\n",),
     )
     .unwrap();
 
     let changeset = ChangeSet::from_directory(&dir).unwrap();
-    let first_release = changeset.releases.get(first_package).unwrap();
+    let mut releases: Vec<Release> = changeset.into();
+    let second_release = releases.pop().unwrap();
+    let first_release = releases.pop().unwrap();
     assert_eq!(first_release.package_name, first_package);
     assert_eq!(first_release.change_type().unwrap(), &first_change_type);
     assert_eq!(
         first_release.changes,
         vec![PackageChange {
-            unique_id: first_change_name.into(),
+            unique_id: UniqueId::from(first_change_name).into(),
             change_type: first_change_type,
-            summary: first_change_summary.to_string()
+            summary: first_change_summary.into()
         },]
     );
-    let second_release = changeset.releases.get(second_package).unwrap();
     assert_eq!(second_release.package_name, second_package);
     assert_eq!(second_release.change_type().unwrap(), &second_change_type);
     // Order of reading files is probably not guaranteed
     let first_variant = vec![
         PackageChange {
-            unique_id: first_change_name.into(),
+            unique_id: UniqueId::from(first_change_name).into(),
             change_type: second_package_type,
-            summary: first_change_summary.to_string(),
+            summary: first_change_summary.into(),
         },
         PackageChange {
-            unique_id: second_change_name.into(),
+            unique_id: UniqueId::from(second_change_name).into(),
             change_type: second_change_type,
-            summary: second_change_summary.to_string(),
+            summary: second_change_summary.into(),
         },
     ];
     let second_variant = first_variant.iter().cloned().rev().collect::<Vec<_>>();
