@@ -31,9 +31,11 @@ fn load_changeset() {
     .unwrap();
 
     let changeset = ChangeSet::from_directory(&dir).unwrap();
-    let mut releases: Vec<Release> = changeset.into();
-    let second_release = releases.pop().unwrap();
-    let first_release = releases.pop().unwrap();
+    let releases: Vec<Release> = changeset.into();
+    let first_release = releases
+        .iter()
+        .find(|release| release.package_name == first_package)
+        .unwrap();
     assert_eq!(first_release.package_name, first_package);
     assert_eq!(first_release.change_type().unwrap(), &first_change_type);
     assert_eq!(
@@ -44,6 +46,10 @@ fn load_changeset() {
             summary: first_change_summary.into()
         },]
     );
+    let second_release = releases
+        .iter()
+        .find(|release| release.package_name == second_package)
+        .unwrap();
     assert_eq!(second_release.package_name, second_package);
     assert_eq!(second_release.change_type().unwrap(), &second_change_type);
     // Order of reading files is probably not guaranteed
