@@ -4,13 +4,13 @@ use tempfile::tempdir;
 #[test]
 fn create_change() {
     let basic_programmatic = Change {
-        unique_id: UniqueId::from("basic_programmatic"),
+        unique_id: UniqueId::exact("basic_programmatic"),
         versioning: Versioning::from(("my_package", ChangeType::Minor)),
         summary: String::from("### This is a summary"),
     };
 
     let multiple_packages = Change {
-        unique_id: UniqueId::from("multiple_packages"),
+        unique_id: UniqueId::exact("multiple_packages"),
         versioning: Versioning::try_from_iter([
             ("my_package", ChangeType::Minor),
             ("my_other_package", ChangeType::Major),

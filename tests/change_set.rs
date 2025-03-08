@@ -20,7 +20,7 @@ fn load_changeset() {
     )
     .unwrap();
 
-    let second_change_name = "second_change";
+    let second_change_name = "Second Change";
     let second_change_path = dir.path().join(format!("{second_change_name}.md"));
     let second_change_type = ChangeType::Major;
     let second_change_summary = "### Another summary";
@@ -41,7 +41,7 @@ fn load_changeset() {
     assert_eq!(
         first_release.changes,
         vec![PackageChange {
-            unique_id: UniqueId::from(first_change_name).into(),
+            unique_id: UniqueId::exact(first_change_name).into(),
             change_type: first_change_type,
             summary: first_change_summary.into()
         },]
@@ -55,12 +55,12 @@ fn load_changeset() {
     // Order of reading files is probably not guaranteed
     let first_variant = vec![
         PackageChange {
-            unique_id: UniqueId::from(first_change_name).into(),
+            unique_id: UniqueId::exact(first_change_name).into(),
             change_type: second_package_type,
             summary: first_change_summary.into(),
         },
         PackageChange {
-            unique_id: UniqueId::from(second_change_name).into(),
+            unique_id: UniqueId::exact(second_change_name).into(),
             change_type: second_change_type,
             summary: second_change_summary.into(),
         },
