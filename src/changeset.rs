@@ -1,8 +1,8 @@
 use std::{path::Path, sync::Arc};
 
 use crate::{
-    change::{LoadingError, UniqueId},
     Change, ChangeType, PackageName,
+    change::{LoadingError, UniqueId},
 };
 
 /// A set of [`Change`]s that combine to form [`Release`]s of one or more packages.

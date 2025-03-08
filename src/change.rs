@@ -51,7 +51,7 @@ impl Change {
             .ok_or(LoadingError::InvalidFileName)?
             .to_string_lossy();
         let contents = std::fs::read_to_string(path)?;
-        Self::from_file_name_and_content(file_name.as_ref(), &contents).map_err(LoadingError::from)
+        Self::from_file_name_and_content(file_name.as_ref(), &contents)
     }
 
     /// Given the name of a file and its content, create a [`Change`].
