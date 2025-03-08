@@ -67,8 +67,8 @@ impl Change {
     ) -> Result<Self, LoadingError> {
         let unique_id = file_name
             .strip_suffix(".md")
-            .ok_or(LoadingError::InvalidFileName)?
-            .into();
+            .ok_or(LoadingError::InvalidFileName)
+            .map(UniqueId::exact)?;
         Self::from_str(unique_id, content).map_err(LoadingError::from)
     }
 
@@ -115,7 +115,7 @@ mod test_change {
     #[test]
     fn it_can_contain_spaces_in_package_names() {
         let change = Change::from_str(
-            UniqueId::from("a change"),
+            UniqueId::normalize("a change"),
             r#"---
 package name: patch
 package name 2: minor
@@ -136,7 +136,7 @@ This is a summary
     #[test]
     fn it_can_contain_spaces_in_change_types() {
         let change = Change::from_str(
-            UniqueId::from("a change"),
+            UniqueId::normalize("a change"),
             r#"---
 package: custom change type
 package name 2: something custom
@@ -163,7 +163,7 @@ This is a summary
     #[test]
     fn it_can_have_an_empty_summary() {
         let change = Change::from_str(
-            UniqueId::from("a change"),
+            UniqueId::normalize("a change"),
             r#"---
 package: patch
 ---"#,
@@ -185,7 +185,7 @@ impl Display for Change {
     }
 }
 
-/// The unique ID of a [`Change`], parsed from and used to set the file name of the Markdown file.
+/// The unique ID of a [`Change`], used to set the file name of the Markdown file.
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct UniqueId(String);
 
@@ -194,13 +194,23 @@ impl UniqueId {
     pub fn to_file_name(&self) -> String {
         format!("{self}.md")
     }
-}
 
-impl<T: AsRef<str>> From<T> for UniqueId {
-    fn from(s: T) -> Self {
+    #[must_use]
+    /// Creates a new [`UniqueId`] from a string without altering the value at all. For working on
+    /// with existing paths.
+    /// Use [`Self::normalize`] when creating new files.
+    pub fn exact<T: AsRef<str>>(value: T) -> Self {
+        Self(value.as_ref().to_string())
+    }
+
+    #[must_use]
+    /// Converts an arbitrary string into only lower case letters and underscores, for creating
+    /// file names from arbitrary strings.
+    pub fn normalize<T: AsRef<str>>(value: T) -> Self {
         let mut previous_was_underscore = false;
         Self(
-            s.as_ref()
+            value
+                .as_ref()
                 .chars()
                 .filter_map(|c| match (c, previous_was_underscore) {
                     (c, _) if c.is_ascii_alphanumeric() => {
@@ -225,13 +235,13 @@ impl Display for UniqueId {
 }
 
 #[cfg(test)]
-mod test_unique_id {
+mod test_unique_id_normalize {
     use super::UniqueId;
 
     #[test]
     fn it_handles_special_characters() {
         assert_eq!(
-            UniqueId::from("`[i carry your_heart with-me(i carry it in]`").to_string(),
+            UniqueId::normalize("`[i carry your_heart with-me(i carry it in]`").to_string(),
             "i_carry_your_heart_with_mei_carry_it_in"
         );
     }
@@ -239,7 +249,7 @@ mod test_unique_id {
     #[test]
     fn it_handles_capitalization() {
         assert_eq!(
-            UniqueId::from("This is a Title").to_string(),
+            UniqueId::normalize("This is a Title").to_string(),
             "this_is_a_title"
         );
     }
@@ -247,7 +257,7 @@ mod test_unique_id {
     #[test]
     fn it_doesnt_duplicate_underscores() {
         assert_eq!(
-            UniqueId::from("Something ______ else").to_string(),
+            UniqueId::normalize("Something ______ else").to_string(),
             "something_else"
         );
     }
