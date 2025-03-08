@@ -5,26 +5,18 @@
     "github>Turbo87/renovate-config//rust/updateToolchain"
   ],
   "platformAutomerge": true,
-  "lockFileMaintenance": { "enabled": true },
+  "lockFileMaintenance": {
+    "enabled": true
+  },
   "packageRules": [
     {
-      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "digest"
+      ],
       "automerge": true
-    }
-  ],
-  "regexManagers": [
-    {
-      "fileMatch": [
-        "release.yml",
-        "prerelease.yml",
-        "release_dry_run.yml"
-      ],
-      "matchStrings": [
-        "version:\\s*(?<currentValue>.*)"
-      ],
-      "depNameTemplate": "knope",
-      "datasourceTemplate": "crate",
-      "versioningTemplate": "semver"
     }
   ]
 }

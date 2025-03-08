@@ -1,0 +1,17 @@
+[package]
+versioned_files = ["Cargo.toml"]
+changelog = "CHANGELOG.md"
+
+[[workflows]]
+name = "document-change"
+
+[[workflows.steps]]
+type = "CreateChangeFile"
+
+[github]
+owner = "knope-dev"
+repo = "changesets"
+
+[bot.releases]
+enabled = true
+
