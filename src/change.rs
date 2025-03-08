@@ -116,12 +116,12 @@ mod test_change {
     fn it_can_contain_spaces_in_package_names() {
         let change = Change::from_str(
             UniqueId::normalize("a change"),
-            r#"---
+            r"---
 package name: patch
 package name 2: minor
 ---
 This is a summary
-"#,
+",
         )
         .unwrap();
         assert_eq!(
@@ -137,12 +137,12 @@ This is a summary
     fn it_can_contain_spaces_in_change_types() {
         let change = Change::from_str(
             UniqueId::normalize("a change"),
-            r#"---
+            r"---
 package: custom change type
 package name 2: something custom
 ---
 This is a summary
-"#,
+",
         )
         .unwrap();
         assert_eq!(
@@ -164,9 +164,9 @@ This is a summary
     fn it_can_have_an_empty_summary() {
         let change = Change::from_str(
             UniqueId::normalize("a change"),
-            r#"---
+            r"---
 package: patch
----"#,
+---",
         )
         .unwrap();
         assert_eq!(change.summary, "");
