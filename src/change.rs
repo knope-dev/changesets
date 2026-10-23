@@ -78,24 +78,39 @@ impl Change {
         if first_line.trim() != "---" {
             return Err(ParsingError::MissingFrontMatter);
         }
-        let versioning_iter = lines
-            .clone()
-            .take_while(|line| line.trim() != "---")
-            .map(|line| {
-                let parts = line
-                    .split_once(':')
-                    .ok_or(ParsingError::InvalidFrontMatter)?;
-                let package_name = PackageName::from(parts.0.trim());
-                let change_type = ChangeType::from(parts.1.trim());
-                Ok((package_name, change_type))
-            })
-            .collect::<Result<Vec<(String, ChangeType)>, ParsingError>>()?;
-        let versioning = Versioning::try_from_iter(versioning_iter)?;
-        let mut lines = lines.skip(versioning.len());
-        let end_front_matter = lines.next().ok_or(ParsingError::InvalidFrontMatter)?;
-        if end_front_matter.trim() != "---" {
+        let mut versioning_iter = Vec::new();
+        let mut end_front_matter = false;
+        for line in lines.by_ref() {
+            if line.trim() == "---" {
+                end_front_matter = true;
+                break;
+            }
+            let parts = line
+                .split_once(':')
+                .ok_or(ParsingError::InvalidFrontMatter)?;
+            let package_name = parts.0.trim();
+            let package_name = if let Some(inner) = package_name
+                .strip_prefix('\'')
+                .and_then(|name| name.strip_suffix('\''))
+            {
+                inner
+            } else if let Some(inner) = package_name
+                .strip_prefix('"')
+                .and_then(|name| name.strip_suffix('"'))
+            {
+                inner
+            } else {
+                package_name
+            };
+            versioning_iter.push((
+                PackageName::from(package_name),
+                ChangeType::from(parts.1.trim()),
+            ));
+        }
+        if !end_front_matter {
             return Err(ParsingError::InvalidFrontMatter);
         }
+        let versioning = Versioning::try_from_iter(versioning_iter)?;
         let summary = lines
             .skip_while(|line| line.trim().is_empty())
             .collect::<Vec<_>>()

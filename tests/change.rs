@@ -61,3 +61,40 @@ fn load_change() {
         Versioning::from(("my_package", ChangeType::Minor))
     );
 }
+
+#[test]
+fn load_quoted_package_names() {
+    for (key, expected) in [
+        ("  '@scope/package'  ", "@scope/package"),
+        ("\"@scope/package\"", "@scope/package"),
+        ("'unmatched", "'unmatched"),
+        ("'package\"", "'package\""),
+        ("package'embedded", "package'embedded"),
+        ("'embedded'quote'", "embedded'quote"),
+    ] {
+        let content = format!("---\n{key}: patch\n---\n\nSummary\n");
+        let change = Change::from_file_name_and_content("test.md", &content).unwrap();
+        assert!(
+            change
+                .versioning
+                .iter()
+                .any(|(name, kind)| { name == expected && *kind == ChangeType::Patch })
+        );
+        assert_eq!(change.summary, "Summary");
+    }
+}
+
+#[test]
+fn normalized_duplicate_keys_keep_last_value_and_summary() {
+    let change = Change::from_file_name_and_content(
+        "test.md",
+        "---\n'package': patch\npackage: major\n---\n\nSummary\n",
+    )
+    .unwrap();
+    assert_eq!(change.versioning.len(), 1);
+    assert_eq!(
+        change.versioning.iter().next().unwrap(),
+        (&String::from("package"), &ChangeType::Major)
+    );
+    assert_eq!(change.summary, "Summary");
+}

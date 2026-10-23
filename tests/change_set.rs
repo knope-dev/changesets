@@ -74,3 +74,23 @@ fn load_changeset() {
         second_release.changes
     );
 }
+
+#[test]
+fn quoted_and_unquoted_package_names_share_a_release() {
+    let dir = tempdir().unwrap();
+    std::fs::write(
+        dir.path().join("quoted.md"),
+        "---\n'@scope/package': minor\n---\n\nQuoted summary\n",
+    )
+    .unwrap();
+    std::fs::write(
+        dir.path().join("unquoted.md"),
+        "---\n@scope/package: patch\n---\n\nUnquoted summary\n",
+    )
+    .unwrap();
+
+    let releases: Vec<Release> = ChangeSet::from_directory(&dir).unwrap().into();
+    assert_eq!(releases.len(), 1);
+    assert_eq!(releases[0].package_name, "@scope/package");
+    assert_eq!(releases[0].changes.len(), 2);
+}
