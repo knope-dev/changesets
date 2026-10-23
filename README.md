@@ -79,7 +79,7 @@ The part of a changeset that applies to a single package and determines how that
 Change files are Markdown files whose names _must_ end with `.md`. The content of the file must be as follows:
 
 1. A line containing `---` (three dashes) on its own line.
-2. Any number of lines containing `package: change type` pairs where `package` defines a package that this change impacts and `change type` is a [change type](#change-type). One pair per line. The first `:` is used to determine the separation between package and change type, so the package name may not contain a `:`.
+2. Any number of lines containing `package: change type` pairs where `package` defines a package that this change impacts and `change type` is a [change type](#change-type). One pair per line. The first `:` is used to determine the separation between package and change type, so the package name may not contain a `:`. Package names may be enclosed in a matching pair of single or double quotes; the quotes are removed when parsing.
 3. A line containing `---` (three dashes) on its own line.
 4. The rest of the file can contain any valid Markdown text.
 
