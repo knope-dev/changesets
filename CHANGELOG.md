@@ -1,3 +1,13 @@
+## 0.5.0 (2026-11-07)
+
+### Breaking Changes
+
+- Strip a matching pair of single or double quotes from package names when parsing change files. Quoted package names now produce the unquoted package name in `Change::versioning`.
+
+### Fixes
+
+- strip quotes from parsed package names (#156)
+
 ## 0.4.0 (2025-03-08)
 
 ### Breaking Changes
